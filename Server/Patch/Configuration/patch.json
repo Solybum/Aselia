@@ -1,0 +1,14 @@
+{
+  "ipAddress": "localhost",
+  "ipRedirect": "localhost",
+  "port": 11000,
+  "maxSpeed": 1024,
+  "maxClients": 16,
+  "maxConcurrentConnections": 6,
+  "noUpdates": false,
+  "updatesPath": "updates",
+  "motd": "Your welcome message here.
+JsonNet supports multiline strings but it is not the JSON standard because
+of this other programs might fail trying to edit this file.
+The same applies to trailing commas like this one ->",
+}
