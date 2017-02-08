@@ -271,10 +271,10 @@ namespace Patch
                 Log.Write(Log.Level.Warning, Log.Type.Server, "Welcome message is too long {0}, truncating to 2045 characters", cfg.motd.Length);
                 cfg.motd = cfg.motd.Substring(0, 2045);
             }
-            
             cmd13.Write((ushort)0x0000);
             cmd13.Write((ushort)0x0013);
             cmd13.WriteStringW(cfg.motd, 0, cfg.motd.Length, true);
+            cmd13.Write((ushort)0x0000);
             cmd13.Write((ushort)cmd13.Position, 0);
         }
         public void MakeUpdates()

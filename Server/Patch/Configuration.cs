@@ -14,7 +14,6 @@ namespace Patch
     {
         public IPAddress _ipAddress;
         public IPAddress _ipRedirect;
-        public IPAddress _ipLogin;
 
         [DataMember] public string ipAddress;
         [DataMember] public string ipRedirect;

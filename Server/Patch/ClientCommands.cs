@@ -105,10 +105,9 @@ namespace Patch
                 c.updates[index].checksum = checksum;
                 c.updates[index].size = size;
 
-#if !ALWAYS_UPDATE
-                if (true || s.updates[index].size != c.updates[index].size ||
-                    s.updates[index].checksum != c.updates[index].checksum)
-#endif
+                if (!s.cfg.noUpdates && 
+                    (s.updates[index].size != c.updates[index].size ||
+                    s.updates[index].checksum != c.updates[index].checksum))
                 {
                     c.updates[index].send = true;
                     c.filesToSend++;
@@ -313,7 +312,7 @@ namespace Patch
             ByteArray ba = new ByteArray(12);
             ba.Write((ushort)0x000C);
             ba.Write((ushort)0x0014);
-            ba.Write(s.cfg._ipAddress.GetAddressBytes(), 0, 4);
+            ba.Write(s.cfg._ipRedirect.GetAddressBytes(), 0, 4);
             ba.Write((byte)((s.cfg.port + 1) >> 8));
             ba.Write((byte)((s.cfg.port + 1)));
             ba.Write((ushort)0x0000);

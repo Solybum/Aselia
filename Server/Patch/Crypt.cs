@@ -11,19 +11,7 @@ namespace Patch
         {
             keys = new uint[1042];
         }
-
-        public uint GetNextKey()
-        {
-            uint ret;
-            if (position == 56)
-            {
-                MixKeys();
-                position = 1;
-            }
-            ret = keys[position];
-            position++;
-            return ret;
-        }
+        
         public void MixKeys()
         {
             uint esi, edi, eax, ebp, edx;
@@ -77,12 +65,29 @@ namespace Patch
             MixKeys();
             position = 56;
         }
-        public void CryptData(byte[] data, int start, int length)
+        public uint GetNextKey()
+        {
+            uint ret;
+            if (position == 56)
+            {
+                MixKeys();
+                position = 1;
+            }
+            ret = keys[position];
+            position++;
+            return ret;
+        }
+        public void CryptData(byte[] data, int index, int length)
         {
             int x;
-            for (x = start; x < (start + length); x += 4)
+            uint key;
+            for (x = index; x < (index + length); x += 4)
             {
-                Array.Copy(BitConverter.GetBytes(BitConverter.ToUInt32(data, x) ^ GetNextKey()), 0, data, x, 4);
+                key = GetNextKey();
+                data[x + 0] ^= (byte)(key >> 0);
+                data[x + 1] ^= (byte)(key >> 8);
+                data[x + 2] ^= (byte)(key >> 16);
+                data[x + 3] ^= (byte)(key >> 24);
             }
         }
     }
