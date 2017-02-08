@@ -275,6 +275,10 @@ namespace Patch
             cmd13.Write((ushort)0x0013);
             cmd13.WriteStringW(cfg.motd, 0, cfg.motd.Length, true);
             cmd13.Write((ushort)0x0000);
+            while ((cmd13.Position % 4) != 0)
+            {
+                cmd13.Write((byte)0);
+            }
             cmd13.Write((ushort)cmd13.Position, 0);
         }
         public void MakeUpdates()
