@@ -64,7 +64,7 @@ namespace Aselia.Patch
                 }
                 catch (Exception ex)
                 {
-                    Log.Write(Log.Level.Error, Log.Type.Server, "Error parsing ship configuration\n{0}", ex);
+                    Log.Write(Log.Level.Error, Log.Type.Server, "Error parsing server configuration\n{0}", ex);
                     Exit(1);
                 }
 
