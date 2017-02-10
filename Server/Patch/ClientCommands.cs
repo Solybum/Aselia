@@ -38,7 +38,7 @@ namespace Patch
             }
             else
             {
-                Log.Write(Log.Level.Info, Log.Type.Conn, "{0} sent an unknown packet {1:X2}", c.GetIP(), c.dec[2]);
+                Log.Write(Log.Level.Info, Log.Type.Server, "{0} sent an unknown packet {1:X2}", c.GetIP(), c.dec[2]);
                 //LogClientPacket(c, F.LogF.Debug);
                 c.todc = true;
             }
@@ -146,7 +146,7 @@ namespace Patch
                     ba.Write(files);
                     c.Encrypt(ba.Buffer, 0, ba.Length);
 
-                    Log.Write(Log.Level.Info, Log.Type.None, "{0} downloading {1} files, {2} bytes", c.username, files, size);
+                    Log.Write(Log.Level.Info, Log.Type.Server, "{0} downloading {1} files, {2} bytes", c.username, files, size);
                     c.sendingFiles = true;
                     c.filesToSend = 0;
                 }

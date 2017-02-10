@@ -19,6 +19,7 @@ namespace Patch
         public Random rng = new Random((int)Stopwatch.GetTimestamp());
         private TcpListener tcpPatch;
         private TcpListener tcpData;
+        private TcpListener tcpQuery;
 
         public List<Client> clients;
         public List<Update> updates;
@@ -41,6 +42,7 @@ namespace Patch
         }
         public void Exit(int result)
         {
+            Log.Write(Log.Level.None, Log.Type.Server, "Terminating process, result: {0}", result);
 #if DEBUG
             Console.WriteLine("Press [ENTER] key to exit.");
             Console.ReadLine();
@@ -72,9 +74,11 @@ namespace Patch
 
                 tcpPatch = new TcpListener(cfg._ipAddress, cfg.port);
                 tcpData = new TcpListener(cfg._ipAddress, cfg.port + 1);
+                tcpQuery = new TcpListener(cfg._ipAddress, cfg.port + 2);
 
                 tcpPatch.Start();
                 tcpData.Start();
+                tcpQuery.Start();
 
                 Console.WriteLine();
                 cfg.LogConfiguration();
@@ -114,6 +118,10 @@ namespace Patch
                 if (tcpData.Pending() == true)
                 {
                     AcceptConnection(tcpData, true);
+                }
+                if (tcpQuery.Pending() == true)
+                {
+                    AcceptConnection(tcpQuery, true, true);
                 }
 
                 CheckClients((servertime - non_blocking_receive) > non_blocking_receive_interval);
@@ -172,12 +180,19 @@ namespace Patch
                 return false;
             }) > 0) { }
         }
-
-        private void AcceptConnection(TcpListener tcpL, bool patch)
+        
+        private void AcceptConnection(TcpListener tcpL, bool patch, bool discard = false)
         {
             try
             {
                 TcpClient tcp = tcpL.AcceptTcpClient();
+                // Discard this connection, used if the connection is to check if the server is alive
+                if (discard)
+                {
+                    tcp.Close();
+                    return;
+                }
+
                 CheckClientConnections(tcp);
                 if (clients.Count < cfg.maxClients)
                 {
@@ -196,7 +211,7 @@ namespace Patch
                         }
                     }
 
-                    Log.Write(Log.Level.Info, Log.Type.Conn, "{0} connection from: {1}",
+                    Log.Write(Log.Level.Info, Log.Type.Conn, "{0} connection from: {1}", 
                         patch ? "DATA" : "PATCH",
                         c.tcpC.Client.RemoteEndPoint);
 
@@ -210,11 +225,11 @@ namespace Patch
             }
             catch (SocketException se)
             {
-                Log.Write(Log.Level.Info, Log.Type.None, "Could not accept connection. Error Code {0}", se.ErrorCode);
+                Log.Write(Log.Level.Error, Log.Type.Conn, "Could not accept connection. Error Code {0}", se.ErrorCode);
             }
             catch (Exception ex)
             {
-                Log.Write(Log.Level.Info, Log.Type.None, "Could not accept connection\n{0}", ex);
+                Log.Write(Log.Level.Error, Log.Type.Conn, "Could not accept connection\n{0}", ex);
             }
         }
         private void CheckClientConnections(TcpClient tcpC)
@@ -246,7 +261,7 @@ namespace Patch
 
             if (count >= cfg.maxConcurrentConnections)
             {
-                Log.Write(Log.Level.Info, Log.Type.None, "{0} ({1}) disconnected, too many connections", clients[firstconn].username, clients[firstconn].GetIP());
+                Log.Write(Log.Level.Info, Log.Type.Conn, "{0} ({1}) disconnected, too many connections", clients[firstconn].username, clients[firstconn].GetIP());
                 clients[firstconn].todc = true;
             }
         }
@@ -257,7 +272,7 @@ namespace Patch
 
             if (string.IsNullOrWhiteSpace(cfg.motd))
             {
-                Log.Write(Log.Level.Warning, Log.Type.None, "Welcome message is empty");
+                Log.Write(Log.Level.Warning, Log.Type.Server, "Welcome message is empty");
             }
 
             cfg.motd = cfg.motd.Replace("\\tC", "\tC");
@@ -275,7 +290,7 @@ namespace Patch
             cmd13.Write((ushort)0x0013);
             cmd13.WriteStringW(cfg.motd, 0, cfg.motd.Length, true);
             cmd13.Write((ushort)0x0000);
-            while ((cmd13.Position % 4) != 0)
+            while((cmd13.Position % 4) != 0)
             {
                 cmd13.Write((byte)0);
             }
@@ -295,7 +310,7 @@ namespace Patch
             }
             catch
             {
-                Log.Write(Log.Level.Warning, Log.Type.Server, "Updates directory not found, proceeding without updates");
+                Log.Write(Log.Level.Info, Log.Type.Server, "Updates directory not found, proceeding without updates");
                 return;
             }
 
@@ -316,14 +331,14 @@ namespace Patch
 
                     if (u.fileName.Length > 48)
                     {
-                        Log.Write(Log.Level.Warning, Log.Type.Server, "File: {0}, file name too long, skipping", u.fullName, u.size, u.checksum);
+                        Log.Write(Log.Level.Warning, Log.Type.Server, "File: {0}, file name is too long, skipping", u.fullName, u.size, u.checksum);
                         skip = true;
                     }
-                    for (int i1 = 0; i1 < u.folders.Count; i1++)
+                    for (int i1 = 1; i1 < u.folders.Count; i1++)
                     {
                         if (u.folders[i1].Length > 64)
                         {
-                            Log.Write(Log.Level.Warning, Log.Type.Server, "File: {0}, folder name too long, skipping", u.fileName, u.size, u.checksum);
+                            Log.Write(Log.Level.Warning, Log.Type.Server, "File: {0}, folder name \"{0}\" is too long, skipping", u.fullName, u.folders[i1]);
                             skip = true;
                         }
                     }
@@ -336,12 +351,12 @@ namespace Patch
                 }
                 catch (Exception ex)
                 {
-                    Log.Write(Log.Level.Warning, Log.Type.Server, "Error reading file: {0}\nException: {1}", file, ex);
+                    Log.Write(Log.Level.Error, Log.Type.Server, "Error reading file: {0}\nException: {1}", file, ex);
                 }
             }
             if (updates.Count == 0)
             {
-                Log.Write(Log.Level.Warning, Log.Type.Server, "No updates found, proceeding without updates");
+                Log.Write(Log.Level.Info, Log.Type.Server, "No updates found, proceeding without updates");
             }
         }
     }
