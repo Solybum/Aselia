@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Patch
+namespace Aselia.Patch
 {
     public class Update
     {
@@ -28,10 +25,25 @@ namespace Patch
 
     public class UpdateClient
     {
-        public int size;
-        public uint checksum;
-        public bool send;
-
+        private int size;
+        public int Size
+        {
+            get { return size; }
+            set { size = value; }
+        }
+        private uint checksum;
+        public uint Checksum
+        {
+            get { return checksum; }
+            set { checksum = value; }
+        }
+        private bool send;
+        public bool Send
+        {
+            get { return send; }
+            set { send = value; }
+        }
+        
         public UpdateClient()
         {
         }

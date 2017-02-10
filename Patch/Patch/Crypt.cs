@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Patch
+﻿namespace Aselia.Patch
 {
     public class Crypt
     {

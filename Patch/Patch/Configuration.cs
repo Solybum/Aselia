@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using System.Net;
 using System.Runtime.Serialization;
-using System.Text;
-using System.Threading.Tasks;
+using Aselia.Patch.Util;
 
-namespace Patch
+namespace Aselia.Patch
 {
     [DataContract]
     public class Configuration

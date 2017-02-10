@@ -5,16 +5,18 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
+using System.Security.Cryptography;
 using System.Threading;
-using System.Threading.Tasks;
+using Aselia.Patch.Util;
 using Libraries;
 
-namespace Patch
+namespace Aselia.Patch
 {
     public class Server
     {
-        public static readonly long non_blocking_receive_interval = 1;
+        public static readonly long nonBlockingReceiveInterval = 1;
+        public static readonly long motdRefreshInterval = 600;
+        public static readonly long clientTimeout = 30;
 
         public Random rng = new Random((int)Stopwatch.GetTimestamp());
         private TcpListener tcpPatch;
@@ -28,6 +30,8 @@ namespace Patch
 
         public long servertime;
         public long non_blocking_receive;
+        public long motd_refresh;
+        public int cfg_md5;
         public long lastSend;
         public int dataRemaining;
         public ByteArray cmd13;
@@ -53,7 +57,7 @@ namespace Patch
         {
             try
             {
-                byte[] data = File.ReadAllBytes("patch.json");
+                byte[] data = File.ReadAllBytes(Global.ConfigFileName);
                 try
                 {
                     cfg = Utils.JsonDeserialize<Configuration>(data, 0, data.Length);
@@ -105,6 +109,11 @@ namespace Patch
             {
                 servertime = Utils.Time();
 
+                if ((servertime - motd_refresh) > motdRefreshInterval)
+                {
+                    RefreshMotd();
+                }
+
                 if (cfg.maxSpeed > 0 && lastSend != servertime)
                 {
                     lastSend = servertime;
@@ -124,9 +133,9 @@ namespace Patch
                     AcceptConnection(tcpQuery, true, true);
                 }
 
-                CheckClients((servertime - non_blocking_receive) > non_blocking_receive_interval);
+                CheckClients((servertime - non_blocking_receive) > nonBlockingReceiveInterval);
 
-                if ((servertime - non_blocking_receive) > non_blocking_receive_interval)
+                if ((servertime - non_blocking_receive) > nonBlockingReceiveInterval)
                 {
                     non_blocking_receive = servertime;
                 }
@@ -163,6 +172,11 @@ namespace Patch
                 c.ReadData(nonblock);
                 c.CheckCmd();
                 c.SendData();
+
+                if ((servertime - c.time) > clientTimeout)
+                {
+                    c.todc = true;
+                }
                 
                 if (c.todc)
                 {
@@ -266,10 +280,32 @@ namespace Patch
             }
         }
 
+        public void RefreshMotd()
+        {
+            try
+            {
+                byte[] data = File.ReadAllBytes(Global.ConfigFileName);
+                MD5 md5 = MD5.Create();
+                byte[] md5_result = md5.ComputeHash(data);
+                int md5_value = md5_result[0] + (md5_result[1] << 8) + (md5_result[2] << 16) + (md5_result[3] << 24);
+
+                if (cfg_md5 != md5_value)
+                {
+                    Configuration newcfg = Utils.JsonDeserialize<Configuration>(data, 0, data.Length);
+                    cfg.motd = newcfg.motd;
+                    MakeCmd13();
+                    cfg_md5 = md5_value;
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Write(Log.Level.Warning, Log.Type.Server, "Error parsing ship configuration\n{0}", ex);
+            }
+            motd_refresh = servertime;
+        }
         public void MakeCmd13()
         {
             cmd13 = new ByteArray(4096);
-
             if (string.IsNullOrWhiteSpace(cfg.motd))
             {
                 Log.Write(Log.Level.Warning, Log.Type.Server, "Welcome message is empty");
@@ -327,7 +363,7 @@ namespace Patch
                     u.fullName = file;
                     u.folders = u.folder.Split(Path.DirectorySeparatorChar).ToList();
                     u.size = data.Length;
-                    u.checksum = Utils.CRC32(data, 0, data.Length);
+                    u.checksum = CRC32.Hash(data, 0, data.Length);
 
                     if (u.fileName.Length > 48)
                     {

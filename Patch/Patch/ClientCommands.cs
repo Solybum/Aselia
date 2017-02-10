@@ -1,15 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Aselia.Patch.Util;
 using Libraries;
 
-// TODO file names 48 bytes
-// TODO directory names 60 bytes
-
-namespace Patch
+namespace Aselia.Patch
 {
     public class ClientCommands
     {
@@ -102,14 +97,14 @@ namespace Patch
 
             if (index < c.updates.Count)
             {
-                c.updates[index].checksum = checksum;
-                c.updates[index].size = size;
+                c.updates[index].Checksum = checksum;
+                c.updates[index].Size = size;
 
                 if (!s.cfg.noUpdates && 
-                    (s.updates[index].size != c.updates[index].size ||
-                    s.updates[index].checksum != c.updates[index].checksum))
+                    (s.updates[index].size != c.updates[index].Size ||
+                    s.updates[index].checksum != c.updates[index].Checksum))
                 {
-                    c.updates[index].send = true;
+                    c.updates[index].Send = true;
                     c.filesToSend++;
                 }
             }
@@ -131,7 +126,7 @@ namespace Patch
                     files = 0;
                     for (int i1 = 0; i1 < s.updates.Count; i1++)
                     {
-                        if (c.updates[i1].send == true)
+                        if (c.updates[i1].Send == true)
                         {
                             size += s.updates[i1].size;
                             files++;
@@ -202,7 +197,7 @@ namespace Patch
         /// <param name="size"></param>
         public void SndCmd07(Client c, byte[] data, int size)
         {
-            uint checksum = Utils.CRC32(data, 0x10, size);
+            uint checksum = CRC32.Hash(data, 0x10, size);
             
             // Wrap the data array, as it already has space for the command stuff
             ByteArray ba = new ByteArray(data);
@@ -372,7 +367,7 @@ namespace Patch
                 while (c.filesToSend < s.updates.Count)
                 {
                     u = s.updates[c.filesToSend];
-                    if (c.updates[c.filesToSend].send == false)
+                    if (c.updates[c.filesToSend].Send == false)
                     {
                         c.filesToSend++;
                         continue;

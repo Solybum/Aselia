@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
 
-namespace Patch
+namespace Aselia.Patch
 {
     class Program
     {
