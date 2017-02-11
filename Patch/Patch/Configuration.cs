@@ -52,8 +52,8 @@ namespace Aselia.Patch
             Log.Write(Log.Level.None, Log.Type.Server, "IP Address: -:{1}", _ipAddress.ToString(), port);
             Log.Write(Log.Level.None, Log.Type.Server, "IP Redirect: -", _ipRedirect.ToString());
 #else
-            Log.Write(Log.Level.None, Log.Type.None, "IP Address: {0}:{1}", _ipAddress.ToString(), port);
-            Log.Write(Log.Level.None, Log.Type.None, "IP Redirect: {0}", _ipRedirect.ToString());
+            Log.Write(Log.Level.None, Log.Type.Server, "IP Address: {0}:{1}", _ipAddress.ToString(), port);
+            Log.Write(Log.Level.None, Log.Type.Server, "IP Redirect: {0}", _ipRedirect.ToString());
 #endif
             Log.Write(Log.Level.None, Log.Type.Server, "Maximum upload speed: {0}", maxSpeed / 1024);
             Log.Write(Log.Level.None, Log.Type.Server, "Maximum client connections: {0}", maxClients);

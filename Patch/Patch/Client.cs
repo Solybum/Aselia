@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-using Libraries;
+using Aselia.Patch.Util;
+using Aselia.Patch.Util.ByteArray;
 
 namespace Aselia.Patch
 {
@@ -71,7 +72,7 @@ namespace Aselia.Patch
         {
             if ((length + 7) > (snd.Length - snd.Position))
             {
-                Log.Write(Log.Level.Warning, Log.Type.Server, "Sending too much data to client {0}.", GetIP());
+                Log.Write(Log.Level.Warning, Log.Type.Server, "Sending too much data to client {0}.", username);
                 todc = true;
             }
             else
@@ -122,7 +123,7 @@ namespace Aselia.Patch
                     }
                     else
                     {
-                        Log.Write(Log.Level.Error, Log.Type.Server, "Could not send data to client {0}. Error code {1}.", GetIP(), se.ErrorCode);
+                        Log.Write(Log.Level.Error, Log.Type.Server, "Could not send data to client {0}. Error code {1}.", username, se.ErrorCode);
                         todc = true;
                     }
                 }
@@ -152,7 +153,7 @@ namespace Aselia.Patch
                 {
                     if (se.NativeErrorCode != 10035)
                     {
-                        Log.Write(Log.Level.Error, Log.Type.Server, "Could not read data from client {0}. Error code {1}.", GetIP(), se.ErrorCode);
+                        Log.Write(Log.Level.Error, Log.Type.Server, "Could not read data from client {0}. Error code {1}.", username, se.ErrorCode);
                         todc = true;
                     }
                 }
@@ -184,7 +185,7 @@ namespace Aselia.Patch
                         }
                         if (expect > BufferSize)
                         {
-                            Log.Write(Log.Level.Warning, Log.Type.Server, "Received too much data from client {0}.", GetIP());
+                            Log.Write(Log.Level.Warning, Log.Type.Server, "Received too much data from client {0}.", username);
                             todc = true;
                             return;
                         }
@@ -195,7 +196,7 @@ namespace Aselia.Patch
                         if (rcvbps > 20000 || sndbps > 480000)
                         {
                             Log.Write(Log.Level.Warning, Log.Type.Server, "Disconnected {0} because of possible DDOS. Packets/s: {1}, Send: {2} Kbps, Receive: {3} Kbps",
-                                GetIP(),
+                                username,
                                 pcktps,
                                 sndbps / 1024L,
                                 rcvbps / 1024L);

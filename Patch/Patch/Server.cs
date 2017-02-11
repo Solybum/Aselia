@@ -8,7 +8,8 @@ using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Threading;
 using Aselia.Patch.Util;
-using Libraries;
+using Aselia.Patch.Util.ByteArray;
+using Aselia.Patch.Util.CRC32;
 
 namespace Aselia.Patch
 {
@@ -29,9 +30,9 @@ namespace Aselia.Patch
         public ClientCommands cmd;
 
         public long servertime;
-        public long non_blocking_receive;
-        public long motd_refresh;
-        public int cfg_md5;
+        public long nonBlockingReceive;
+        public long motdRefresh;
+        public int cfgMD5;
         public long lastSend;
         public int dataRemaining;
         public ByteArray cmd13;
@@ -64,7 +65,7 @@ namespace Aselia.Patch
                 }
                 catch (Exception ex)
                 {
-                    Log.Write(Log.Level.Error, Log.Type.Server, "Error parsing server configuration\n{0}", ex);
+                    Log.Write(Log.Level.Error, Log.Type.Server, "Error loading server configuration\n{0}", ex);
                     Exit(1);
                 }
 
@@ -109,7 +110,7 @@ namespace Aselia.Patch
             {
                 servertime = Utils.Time();
 
-                if ((servertime - motd_refresh) > motdRefreshInterval)
+                if ((servertime - motdRefresh) > motdRefreshInterval)
                 {
                     RefreshMotd();
                 }
@@ -133,17 +134,17 @@ namespace Aselia.Patch
                     AcceptConnection(tcpQuery, true, true);
                 }
 
-                CheckClients((servertime - non_blocking_receive) > nonBlockingReceiveInterval);
+                ProcessClients((servertime - nonBlockingReceive) > nonBlockingReceiveInterval);
 
-                if ((servertime - non_blocking_receive) > nonBlockingReceiveInterval)
+                if ((servertime - nonBlockingReceive) > nonBlockingReceiveInterval)
                 {
-                    non_blocking_receive = servertime;
+                    nonBlockingReceive = servertime;
                 }
 
                 Thread.Sleep(1);
             }
         }
-        private void CheckClients(bool nonblock)
+        private void ProcessClients(bool nonBlocking)
         {
             bool removeClients = false;
             for (int i1 = 0; i1 < clients.Count; i1++)
@@ -169,7 +170,7 @@ namespace Aselia.Patch
                     cmd.SendFileData(c);
                 }
 
-                c.ReadData(nonblock);
+                c.ReadData(nonBlocking);
                 c.CheckCmd();
                 c.SendData();
 
@@ -239,11 +240,11 @@ namespace Aselia.Patch
             }
             catch (SocketException se)
             {
-                Log.Write(Log.Level.Error, Log.Type.Conn, "Could not accept connection. Error Code {0}", se.ErrorCode);
+                Log.Write(Log.Level.Error, Log.Type.Server, "Could not accept connection. Error Code {0}", se.ErrorCode);
             }
             catch (Exception ex)
             {
-                Log.Write(Log.Level.Error, Log.Type.Conn, "Could not accept connection\n{0}", ex);
+                Log.Write(Log.Level.Error, Log.Type.Server, "Could not accept connection\n{0}", ex);
             }
         }
         private void CheckClientConnections(TcpClient tcpC)
@@ -275,7 +276,7 @@ namespace Aselia.Patch
 
             if (count >= cfg.maxConcurrentConnections)
             {
-                Log.Write(Log.Level.Info, Log.Type.Conn, "{0} ({1}) disconnected, too many connections", clients[firstconn].username, clients[firstconn].GetIP());
+                Log.Write(Log.Level.Info, Log.Type.Server, "{0} ({1}) disconnected, too many connections", clients[firstconn].username, clients[firstconn].GetIP());
                 clients[firstconn].todc = true;
             }
         }
@@ -289,19 +290,19 @@ namespace Aselia.Patch
                 byte[] md5_result = md5.ComputeHash(data);
                 int md5_value = md5_result[0] + (md5_result[1] << 8) + (md5_result[2] << 16) + (md5_result[3] << 24);
 
-                if (cfg_md5 != md5_value)
+                if (cfgMD5 != md5_value)
                 {
                     Configuration newcfg = Utils.JsonDeserialize<Configuration>(data, 0, data.Length);
                     cfg.motd = newcfg.motd;
                     MakeCmd13();
-                    cfg_md5 = md5_value;
+                    cfgMD5 = md5_value;
                 }
             }
             catch (Exception ex)
             {
                 Log.Write(Log.Level.Warning, Log.Type.Server, "Error parsing ship configuration\n{0}", ex);
             }
-            motd_refresh = servertime;
+            motdRefresh = servertime;
         }
         public void MakeCmd13()
         {
