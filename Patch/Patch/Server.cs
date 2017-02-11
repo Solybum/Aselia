@@ -5,18 +5,17 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Security.Cryptography;
 using System.Threading;
+using Aselia.Patch.Properties;
 using Aselia.Patch.Util;
-using Aselia.Patch.Util.ByteArray;
 using Aselia.Patch.Util.CRC32;
+using Libraries;
 
 namespace Aselia.Patch
 {
     public class Server
     {
         public static readonly long nonBlockingReceiveInterval = 1;
-        public static readonly long motdRefreshInterval = 600;
         public static readonly long clientTimeout = 30;
 
         public Random rng = new Random((int)Stopwatch.GetTimestamp());
@@ -31,8 +30,6 @@ namespace Aselia.Patch
 
         public long servertime;
         public long nonBlockingReceive;
-        public long motdRefresh;
-        public int cfgMD5;
         public long lastSend;
         public int dataRemaining;
         public ByteArray cmd13;
@@ -58,17 +55,6 @@ namespace Aselia.Patch
         {
             try
             {
-                byte[] data = File.ReadAllBytes(Global.ConfigFileName);
-                try
-                {
-                    cfg = Utils.JsonDeserialize<Configuration>(data, 0, data.Length);
-                }
-                catch (Exception ex)
-                {
-                    Log.Write(Log.Level.Error, Log.Type.Server, "Error loading server configuration\n{0}", ex);
-                    Exit(1);
-                }
-
                 if (!cfg.CheckConfiguration())
                 {
                     Exit(1);
@@ -77,9 +63,9 @@ namespace Aselia.Patch
                 MakeCmd13();
                 MakeUpdates();
 
-                tcpPatch = new TcpListener(cfg._ipAddress, cfg.port);
-                tcpData = new TcpListener(cfg._ipAddress, cfg.port + 1);
-                tcpQuery = new TcpListener(cfg._ipAddress, cfg.port + 2);
+                tcpPatch = new TcpListener(cfg._ipAddress, Settings.Default.Port);
+                tcpData = new TcpListener(cfg._ipAddress, Settings.Default.Port + 1);
+                tcpQuery = new TcpListener(cfg._ipAddress, Settings.Default.Port + 2);
 
                 tcpPatch.Start();
                 tcpData.Start();
@@ -109,16 +95,11 @@ namespace Aselia.Patch
             while(true)
             {
                 servertime = Utils.Time();
-
-                if ((servertime - motdRefresh) > motdRefreshInterval)
-                {
-                    RefreshMotd();
-                }
-
-                if (cfg.maxSpeed > 0 && lastSend != servertime)
+                
+                if (Settings.Default.MaxSpeed > 0 && lastSend != servertime)
                 {
                     lastSend = servertime;
-                    dataRemaining = cfg.maxSpeed;
+                    dataRemaining = Settings.Default.MaxSpeed;
                 }
                 
                 if (tcpPatch.Pending() == true)
@@ -209,7 +190,7 @@ namespace Aselia.Patch
                 }
 
                 CheckClientConnections(tcp);
-                if (clients.Count < cfg.maxClients)
+                if (clients.Count < Settings.Default.MaxClients)
                 {
                     Client c = new Client(this);
                     c.tcpC = tcp;
@@ -274,58 +255,36 @@ namespace Aselia.Patch
                 }
             }
 
-            if (count >= cfg.maxConcurrentConnections)
+            if (count >= Settings.Default.MaxConcurrentConnections)
             {
                 Log.Write(Log.Level.Info, Log.Type.Server, "{0} ({1}) disconnected, too many connections", clients[firstconn].username, clients[firstconn].GetIP());
                 clients[firstconn].todc = true;
             }
         }
-
-        public void RefreshMotd()
-        {
-            try
-            {
-                byte[] data = File.ReadAllBytes(Global.ConfigFileName);
-                MD5 md5 = MD5.Create();
-                byte[] md5_result = md5.ComputeHash(data);
-                int md5_value = md5_result[0] + (md5_result[1] << 8) + (md5_result[2] << 16) + (md5_result[3] << 24);
-
-                if (cfgMD5 != md5_value)
-                {
-                    Configuration newcfg = Utils.JsonDeserialize<Configuration>(data, 0, data.Length);
-                    cfg.motd = newcfg.motd;
-                    MakeCmd13();
-                    cfgMD5 = md5_value;
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Write(Log.Level.Warning, Log.Type.Server, "Error parsing ship configuration\n{0}", ex);
-            }
-            motdRefresh = servertime;
-        }
+        
         public void MakeCmd13()
         {
+            string motd = Settings.Default.MOTD;
             cmd13 = new ByteArray(4096);
-            if (string.IsNullOrWhiteSpace(cfg.motd))
+            if (string.IsNullOrWhiteSpace(motd))
             {
                 Log.Write(Log.Level.Warning, Log.Type.Server, "Welcome message is empty");
             }
 
-            cfg.motd = cfg.motd.Replace("\\tC", "\tC");
-            cfg.motd = cfg.motd.Replace("$C", "\tC");
-            cfg.motd = cfg.motd.Replace("\r\n", "\n");
-            cfg.motd = cfg.motd.Replace("\\n", "\n");
+            motd = motd.Replace("\\tC", "\tC");
+            motd = motd.Replace("$C", "\tC");
+            motd = motd.Replace("\r\n", "\n");
+            motd = motd.Replace("\\n", "\n");
 
             // Leaving space for a null terminator
-            if (cfg.motd.Length > 2045)
+            if (motd.Length > 2045)
             {
-                Log.Write(Log.Level.Warning, Log.Type.Server, "Welcome message is too long {0}, truncating to 2045 characters", cfg.motd.Length);
-                cfg.motd = cfg.motd.Substring(0, 2045);
+                Log.Write(Log.Level.Warning, Log.Type.Server, "Welcome message is too long {0}, truncating to 2045 characters", motd.Length);
+                motd = motd.Substring(0, 2045);
             }
             cmd13.Write((ushort)0x0000);
             cmd13.Write((ushort)0x0013);
-            cmd13.WriteStringW(cfg.motd, 0, cfg.motd.Length, true);
+            cmd13.WriteStringW(motd, 0, motd.Length, true);
             cmd13.Write((ushort)0x0000);
             while((cmd13.Position % 4) != 0)
             {
@@ -343,7 +302,7 @@ namespace Aselia.Patch
             fileList = null;
             try
             {
-                fileList = Directory.GetFiles(cfg.updatesPath, "*", SearchOption.AllDirectories);
+                fileList = Directory.GetFiles(Settings.Default.UpdatesPath, "*", SearchOption.AllDirectories);
             }
             catch
             {

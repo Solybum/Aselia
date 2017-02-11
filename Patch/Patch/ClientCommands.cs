@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Aselia.Patch.Properties;
 using Aselia.Patch.Util;
-using Aselia.Patch.Util.ByteArray;
 using Aselia.Patch.Util.CRC32;
+using Libraries;
 
 namespace Aselia.Patch
 {
@@ -66,7 +67,7 @@ namespace Aselia.Patch
             }
             else
             {
-                if (s.cfg.noUpdates == true || s.updates.Count == 0)
+                if (Settings.Default.DisableUpdates == true || s.updates.Count == 0)
                 {
                     SndCmd12(c);
                 }
@@ -99,7 +100,7 @@ namespace Aselia.Patch
                 c.updates[index].Checksum = checksum;
                 c.updates[index].Size = size;
 
-                if (!s.cfg.noUpdates && 
+                if (!Settings.Default.DisableUpdates && 
                     (s.updates[index].size != c.updates[index].Size ||
                     s.updates[index].checksum != c.updates[index].Checksum))
                 {
@@ -307,8 +308,8 @@ namespace Aselia.Patch
             ba.Write((ushort)0x000C);
             ba.Write((ushort)0x0014);
             ba.Write(s.cfg._ipRedirect.GetAddressBytes(), 0, 4);
-            ba.Write((byte)((s.cfg.port + 1) >> 8));
-            ba.Write((byte)((s.cfg.port + 1)));
+            ba.Write((byte)((Settings.Default.Port + 1) >> 8));
+            ba.Write((byte)((Settings.Default.Port + 1)));
             ba.Write((ushort)0x0000);
             c.Encrypt(ba.Buffer, 0, ba.Length);
             c.todc = true;
@@ -358,7 +359,7 @@ namespace Aselia.Patch
         }
         public void SendFileData(Client c)
         {
-            if (s.cfg.maxSpeed == 0 || s.dataRemaining != 0)
+            if (Settings.Default.MaxSpeed == 0 || s.dataRemaining != 0)
             {
                 int size;
                 Update u, pu;

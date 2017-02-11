@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using Aselia.Patch.Util;
-using Aselia.Patch.Util.ByteArray;
+using Libraries;
 
 namespace Aselia.Patch
 {

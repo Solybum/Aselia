@@ -2,7 +2,6 @@
 using System.IO;
 using System.Net;
 using System.Text.RegularExpressions;
-using Newtonsoft.Json;
 
 namespace Aselia.Patch.Util
 {
@@ -69,19 +68,6 @@ namespace Aselia.Patch.Util
                 text = text.Substring(0, pos);
             }
             return text.Replace("\0", string.Empty);
-        }
-
-        public static string JsonSerialize(object data, bool format = false)
-        {
-            return JsonConvert.SerializeObject(data, format ? Formatting.Indented : Formatting.None);
-        }
-        public static T JsonDeserialize<T>(byte[] data, int offset, int count)
-        {
-            using (StreamReader sr = new StreamReader(new MemoryStream(data, offset, count)))
-            {
-                JsonSerializer json = new JsonSerializer();
-                return json.Deserialize<T>(new JsonTextReader(sr));
-            }
         }
     }
 }
