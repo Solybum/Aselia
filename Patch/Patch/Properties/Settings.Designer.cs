@@ -121,7 +121,7 @@ namespace Aselia.Patch.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Welcome to $C|Aselia$C7\'s $C3Patch Server$C7")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Welcome to $C|Aselia$C7\'s Patch server software")]
         public string MOTD {
             get {
                 return ((string)(this["MOTD"]));

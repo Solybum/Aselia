@@ -36,6 +36,7 @@ namespace Aselia.Patch
             else
             {
                 Log.Write(Log.Level.Info, Log.Type.Server, "{0} sent an unknown packet {1:X2}", c.username, c.dec[2]);
+                //LogClientPacket(c, F.LogF.Debug);
                 c.todc = true;
             }
         }
