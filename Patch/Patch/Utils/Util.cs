@@ -3,9 +3,9 @@ using System.IO;
 using System.Net;
 using System.Text.RegularExpressions;
 
-namespace Aselia.Patch.Util
+namespace Aselia.Patch.Utils
 {
-    public static class Utils
+    public static class Util
     {
         public static long Time()
         {

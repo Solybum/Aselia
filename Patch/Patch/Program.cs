@@ -29,12 +29,12 @@ namespace Aselia.Patch
             return assembly;
         }
 
-        public static void SetupSettingsForMono()
+        public static bool SetupSettingsForMono()
         {
             if (Type.GetType("Mono.Runtime") == null)
             {
                 // Not Mono
-                return;
+                return true;
             }
 
             if (ConfigurationManager.AppSettings[nameof(Settings.Default.IPAddress)]                == null ||
@@ -49,6 +49,7 @@ namespace Aselia.Patch
             {
                 Console.WriteLine("One or more settings were not found\n" +
                     "Please fix that before running the server with mono");
+                return false;
             }
 
             Settings.Default.IPAddress                = ConfigurationManager.AppSettings[nameof(Settings.Default.IPAddress)];
@@ -60,12 +61,16 @@ namespace Aselia.Patch
             Settings.Default.DisableUpdates           = bool.Parse(ConfigurationManager.AppSettings[nameof(Settings.Default.DisableUpdates)]);
             Settings.Default.UpdatesPath              = ConfigurationManager.AppSettings[nameof(Settings.Default.UpdatesPath)];
             Settings.Default.MOTD                     = ConfigurationManager.AppSettings[nameof(Settings.Default.MOTD)];
+            return true;
         }
 
         static void Main(string[] args)
         {
             AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(AssemblyResolve);
-            SetupSettingsForMono();
+            if (!SetupSettingsForMono())
+            {
+                return;
+            }
 
             string cmdtitle = string.Format("{0} v{1}.{2}",
                 ((AssemblyTitleAttribute)Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyTitleAttribute), false)[0]).Title,
@@ -74,7 +79,7 @@ namespace Aselia.Patch
 
             Console.Title = cmdtitle;
             Console.WriteLine(cmdtitle + "\n");
-            
+
             Server s = new Server();
             s.Start();
 #if DEBUG

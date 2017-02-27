@@ -27,7 +27,7 @@
       <Value Profile="(Default)">updates</Value>
     </Setting>
     <Setting Name="MOTD" Type="System.String" Scope="User">
-      <Value Profile="(Default)">Welcome to $C|Aselia$C7's Patch server software</Value>
+      <Value Profile="(Default)">$C|Aselia$C7 PSOBB server software</Value>
     </Setting>
   </Settings>
 </SettingsFile>

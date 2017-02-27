@@ -1,4 +1,4 @@
-﻿namespace Aselia.Patch.Util.CRC32
+﻿namespace Aselia.Patch.Utils.CRC32
 {
     public static class CRC32
     {

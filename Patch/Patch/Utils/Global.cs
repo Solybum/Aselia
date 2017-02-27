@@ -1,4 +1,4 @@
-﻿namespace Aselia.Patch
+﻿namespace Aselia.Patch.Utils
 {
     public abstract class Global
     {

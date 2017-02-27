@@ -7,8 +7,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using Aselia.Patch.Properties;
-using Aselia.Patch.Util;
-using Aselia.Patch.Util.CRC32;
+using Aselia.Patch.Utils;
+using Aselia.Patch.Utils.CRC32;
 using Libraries;
 
 namespace Aselia.Patch
@@ -28,7 +28,7 @@ namespace Aselia.Patch
         public Configuration cfg;
         public ClientCommands cmd;
 
-        public long servertime;
+        public long time;
         public long nonBlockingReceive;
         public long lastSend;
         public int dataRemaining;
@@ -44,7 +44,7 @@ namespace Aselia.Patch
         }
         public void Exit(int result)
         {
-            Log.Write(Log.Level.None, Log.Type.Server, "Terminating process, result: {0}", result);
+            Log.Info(Log.Type.Server, "Terminating process, result: {0}", result);
 #if DEBUG
             Console.WriteLine("Press [ENTER] key to exit.");
             Console.ReadLine();
@@ -75,12 +75,12 @@ namespace Aselia.Patch
                 cfg.LogConfiguration();
                 Console.WriteLine();
 
-                Log.Write(Log.Level.Info, Log.Type.Server, "Server started");
+                Log.Info(Log.Type.Server, "Server started");
                 Console.WriteLine();
             }
             catch (Exception ex)
             {
-                Log.Write(Log.Level.Error, Log.Type.Server, "Error starting server\n{0}", ex);
+                Log.Error(Log.Type.Server, "Error starting server\n{0}", ex);
                 Exit(1);
             }
 
@@ -94,35 +94,37 @@ namespace Aselia.Patch
         {
             while(true)
             {
-                servertime = Utils.Time();
-                
-                if (Settings.Default.MaxSpeed > 0 && lastSend != servertime)
-                {
-                    lastSend = servertime;
-                    dataRemaining = Settings.Default.MaxSpeed;
-                }
-                
-                if (tcpPatch.Pending() == true)
-                {
-                    AcceptConnection(tcpPatch, false);
-                }
-                if (tcpData.Pending() == true)
-                {
-                    AcceptConnection(tcpData, true);
-                }
-                if (tcpQuery.Pending() == true)
-                {
-                    AcceptConnection(tcpQuery, true, true);
-                }
-
-                ProcessClients((servertime - nonBlockingReceive) > nonBlockingReceiveInterval);
-
-                if ((servertime - nonBlockingReceive) > nonBlockingReceiveInterval)
-                {
-                    nonBlockingReceive = servertime;
-                }
-
+                time = Util.Time();
+                ProcessLoop();
                 Thread.Sleep(1);
+            }
+        }
+        private void ProcessLoop()
+        {
+            if (Settings.Default.MaxSpeed > 0 && lastSend != time)
+            {
+                lastSend = time;
+                dataRemaining = Settings.Default.MaxSpeed;
+            }
+
+            if (tcpPatch.Pending() == true)
+            {
+                AcceptConnection(tcpPatch, false);
+            }
+            if (tcpData.Pending() == true)
+            {
+                AcceptConnection(tcpData, true);
+            }
+            if (tcpQuery.Pending() == true)
+            {
+                AcceptConnection(tcpQuery, true, true);
+            }
+
+            ProcessClients((time - nonBlockingReceive) > nonBlockingReceiveInterval);
+
+            if ((time - nonBlockingReceive) > nonBlockingReceiveInterval)
+            {
+                nonBlockingReceive = time;
             }
         }
         private void ProcessClients(bool nonBlocking)
@@ -132,9 +134,9 @@ namespace Aselia.Patch
             {
                 Client c = clients[i1];
 
-                if (c.time != servertime)
+                if (c.time != time)
                 {
-                    long n2 = 1 + servertime - c.time;
+                    long n2 = 1 + time - c.time;
                     c.pcktps /= (int)n2;
                     c.sndbps /= (int)n2;
                     c.rcvbps /= (int)n2;
@@ -155,7 +157,7 @@ namespace Aselia.Patch
                 c.CheckCmd();
                 c.SendData();
 
-                if ((servertime - c.time) > clientTimeout)
+                if ((time - c.time) > clientTimeout)
                 {
                     c.todc = true;
                 }
@@ -194,8 +196,8 @@ namespace Aselia.Patch
                 {
                     Client c = new Client(this);
                     c.tcpC = tcp;
-                    c.time = servertime;
-                    c.connectionTime = servertime;
+                    c.time = time;
+                    c.connectionTime = time;
                     c.patch = patch;
                     cmd.SndCmd02(c);
 
@@ -207,7 +209,7 @@ namespace Aselia.Patch
                         }
                     }
 
-                    Log.Write(Log.Level.Info, Log.Type.Conn, "{0} connection from: {1}", 
+                    Log.Info(Log.Type.Conn, "{0} connection from: {1}", 
                         patch ? "DATA" : "PATCH",
                         c.tcpC.Client.RemoteEndPoint);
 
@@ -215,17 +217,17 @@ namespace Aselia.Patch
                 }
                 else
                 {
-                    Log.Write(Log.Level.Warning, Log.Type.Server, "Server connection limit reached");
+                    Log.Warning(Log.Type.Server, "Server connection limit reached");
                     tcp.Close();
                 }
             }
             catch (SocketException se)
             {
-                Log.Write(Log.Level.Error, Log.Type.Server, "Could not accept connection. Error Code {0}", se.ErrorCode);
+                Log.Error(Log.Type.Server, "Could not accept connection. Error Code {0}", se.ErrorCode);
             }
             catch (Exception ex)
             {
-                Log.Write(Log.Level.Error, Log.Type.Server, "Could not accept connection\n{0}", ex);
+                Log.Error(Log.Type.Server, "Could not accept connection\n{0}", ex);
             }
         }
         private void CheckClientConnections(TcpClient tcpC)
@@ -257,7 +259,7 @@ namespace Aselia.Patch
 
             if (count >= Settings.Default.MaxConcurrentConnections)
             {
-                Log.Write(Log.Level.Info, Log.Type.Server, "{0} ({1}) disconnected, too many connections", clients[firstconn].username, clients[firstconn].GetIP());
+                Log.Info(Log.Type.Server, "{0} ({1}) disconnected, too many connections", clients[firstconn].username, clients[firstconn].GetIP());
                 clients[firstconn].todc = true;
             }
         }
@@ -268,7 +270,7 @@ namespace Aselia.Patch
             cmd13 = new ByteArray(4096);
             if (string.IsNullOrWhiteSpace(motd))
             {
-                Log.Write(Log.Level.Warning, Log.Type.Server, "Welcome message is empty");
+                Log.Warning(Log.Type.Server, "Welcome message is empty");
             }
 
             motd = motd.Replace("\\tC", "\tC");
@@ -279,7 +281,7 @@ namespace Aselia.Patch
             // Leaving space for a null terminator
             if (motd.Length > 2045)
             {
-                Log.Write(Log.Level.Warning, Log.Type.Server, "Welcome message is too long {0}, truncating to 2045 characters", motd.Length);
+                Log.Warning(Log.Type.Server, "Welcome message is too long {0}, truncating to 2045 characters", motd.Length);
                 motd = motd.Substring(0, 2045);
             }
             cmd13.Write((ushort)0x0000);
@@ -306,7 +308,7 @@ namespace Aselia.Patch
             }
             catch
             {
-                Log.Write(Log.Level.Info, Log.Type.Server, "Updates directory not found, proceeding without updates");
+                Log.Info(Log.Type.Server, "Updates directory not found, proceeding without updates");
                 return;
             }
 
@@ -327,14 +329,14 @@ namespace Aselia.Patch
 
                     if (u.fileName.Length > 48)
                     {
-                        Log.Write(Log.Level.Warning, Log.Type.Server, "File: {0}, file name is too long, skipping", u.fullName, u.size, u.checksum);
+                        Log.Warning(Log.Type.Server, "File: {0}, file name is too long, skipping", u.fullName, u.size, u.checksum);
                         skip = true;
                     }
                     for (int i1 = 1; i1 < u.folders.Count; i1++)
                     {
                         if (u.folders[i1].Length > 64)
                         {
-                            Log.Write(Log.Level.Warning, Log.Type.Server, "File: {0}, folder name \"{0}\" is too long, skipping", u.fullName, u.folders[i1]);
+                            Log.Warning(Log.Type.Server, "File: {0}, folder name \"{0}\" is too long, skipping", u.fullName, u.folders[i1]);
                             skip = true;
                         }
                     }
@@ -342,17 +344,17 @@ namespace Aselia.Patch
                     if (!skip)
                     {
                         updates.Add(u);
-                        Log.Write(Log.Level.Info, Log.Type.Server, "File: {0}, Size: {1}, Checksum: {2:X8}", u.fileName, u.size, u.checksum);
+                        Log.Info(Log.Type.Server, "File: {0}, Size: {1}, Checksum: {2:X8}", u.fileName, u.size, u.checksum);
                     }
                 }
                 catch (Exception ex)
                 {
-                    Log.Write(Log.Level.Error, Log.Type.Server, "Error reading file: {0}\nException: {1}", file, ex);
+                    Log.Error(Log.Type.Server, "Error reading file: {0}\nException: {1}", file, ex);
                 }
             }
             if (updates.Count == 0)
             {
-                Log.Write(Log.Level.Info, Log.Type.Server, "No updates found, proceeding without updates");
+                Log.Info(Log.Type.Server, "No updates found, proceeding without updates");
             }
         }
     }

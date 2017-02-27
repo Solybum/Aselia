@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using Aselia.Patch.Properties;
-using Aselia.Patch.Util;
-using Aselia.Patch.Util.CRC32;
+using Aselia.Patch.Utils;
+using Aselia.Patch.Utils.CRC32;
 using Libraries;
 
 namespace Aselia.Patch
@@ -11,7 +11,7 @@ namespace Aselia.Patch
     public class ClientCommands
     {
         private Server s;
-        private Random rng = new Random((int)Utils.Time());
+        private Random rng = new Random((int)Util.Time());
         byte[] fileData = new byte[Client.BufferSize];
 
         private Dictionary<int, Action<Client>> CmdList = new Dictionary<int, Action<Client>>();
@@ -35,8 +35,7 @@ namespace Aselia.Patch
             }
             else
             {
-                Log.Write(Log.Level.Info, Log.Type.Server, "{0} sent an unknown packet {1:X2}", c.username, c.dec[2]);
-                //LogClientPacket(c, F.LogF.Debug);
+                Log.Info(Log.Type.Server, "{0} sent an unknown packet {1:X2}", c.username, c.dec[2]);
                 c.todc = true;
             }
         }
@@ -142,7 +141,7 @@ namespace Aselia.Patch
                     ba.Write(files);
                     c.Encrypt(ba.Buffer, 0, ba.Length);
 
-                    Log.Write(Log.Level.Info, Log.Type.Server, "{0} downloading {1} files, {2} bytes", c.username, files, size);
+                    Log.Info(Log.Type.Server, "{0} downloading {1} files, {2} bytes", c.username, files, size);
                     c.sendingFiles = true;
                     c.filesToSend = 0;
                 }
@@ -426,7 +425,7 @@ namespace Aselia.Patch
                         }
                         catch
                         {
-                            Log.Write(Log.Level.Warning, Log.Type.Server, "Error reading file: {0}, Skipping", u.fileName);
+                            Log.Error(Log.Type.Server, "Error reading file: {0}, Skipping", u.fileName);
 
                             SndCmd08(c);
                             c.fileOffset = 0;

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-using Aselia.Patch.Util;
+using Aselia.Patch.Utils;
 using Libraries;
 
 namespace Aselia.Patch
@@ -72,7 +72,7 @@ namespace Aselia.Patch
         {
             if ((length + 7) > (snd.Length - snd.Position))
             {
-                Log.Write(Log.Level.Warning, Log.Type.Server, "Sending too much data to client {0}.", username);
+                Log.Warning(Log.Type.Server, "Sending too much data to client {0}.", username);
                 todc = true;
             }
             else
@@ -108,7 +108,7 @@ namespace Aselia.Patch
                     snd.Position -= ret;
                     sndbps += ret;
 
-                    time = s.servertime;
+                    time = s.time;
                     if (snd.Position > 0)
                     {
                         Array.Copy(snd.Buffer, ret, snd.Buffer, 0, snd.Position);
@@ -123,7 +123,7 @@ namespace Aselia.Patch
                     }
                     else
                     {
-                        Log.Write(Log.Level.Error, Log.Type.Server, "Could not send data to client {0}. Error code {1}.", username, se.ErrorCode);
+                        Log.Warning(Log.Type.Server, "Could not send data to client {0}. Error code {1}.", username, se.ErrorCode);
                         todc = true;
                     }
                 }
@@ -147,13 +147,13 @@ namespace Aselia.Patch
                         todc = true;
                     }
 
-                    time = s.servertime;
+                    time = s.time;
                 }
                 catch (SocketException se)
                 {
                     if (se.NativeErrorCode != 10035)
                     {
-                        Log.Write(Log.Level.Error, Log.Type.Server, "Could not read data from client {0}. Error code {1}.", username, se.ErrorCode);
+                        Log.Warning(Log.Type.Server, "Could not read data from client {0}. Error code {1}.", username, se.ErrorCode);
                         todc = true;
                     }
                 }
@@ -185,7 +185,7 @@ namespace Aselia.Patch
                         }
                         if (expect > BufferSize)
                         {
-                            Log.Write(Log.Level.Warning, Log.Type.Server, "Received too much data from client {0}.", username);
+                            Log.Warning(Log.Type.Server, "Received too much data from client {0}.", username);
                             todc = true;
                             return;
                         }
@@ -195,7 +195,7 @@ namespace Aselia.Patch
                     {
                         if (rcvbps > 20000 || sndbps > 480000)
                         {
-                            Log.Write(Log.Level.Warning, Log.Type.Server, "Disconnected {0} because of possible DDOS. Packets/s: {1}, Send: {2} Kbps, Receive: {3} Kbps",
+                            Log.Warning(Log.Type.Server, "Disconnected {0} because of possible DDOS. Packets/s: {1}, Send: {2} Kbps, Receive: {3} Kbps",
                                 username,
                                 pcktps,
                                 sndbps / 1024L,
