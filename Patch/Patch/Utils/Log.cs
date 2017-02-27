@@ -10,16 +10,16 @@ namespace Aselia.Patch.Utils
         public enum Type
         {
             None,
+            Debug,
             Server,
             Conn,
-            Debug,
         }
         private static List<string> logFileNames = new List<string>()
         {
             "",
+            "debug.log",
             "server.log",
             "conn.log",
-            "debug.log",
         };
    
         private static void LogException(string fmt, Exception ex)
