@@ -8,4 +8,4 @@ Given the fact that most of my programming experience has been in C#, it just ma
 After a while after porting the rewritten C code I wanted to give a more 'original' name to the project and a friend suggested **Aselia**, which stays within the trend of PSOBB private server names (**Tethealla** and **Sylverant**).  
 
 ### Dependencies
-[ByteArray](https://github.com/Solybum/Libraries/tree/master/ByteArray).
+[ByteArray](https://github.com/Solybum/Libraries/tree/master/ByteArray)
