@@ -21,7 +21,7 @@ namespace Aselia.Patch.Utils
             "server.log",
             "conn.log",
         };
-   
+
         private static void LogException(string fmt, Exception ex)
         {
             Error(Type.Server, "Invalid log format or arguments: {0}\n{1}", fmt, ex);
@@ -47,22 +47,16 @@ namespace Aselia.Patch.Utils
             {
                 try
                 {
+                    string directory = Path.Combine("log", "patch");
+                    string fileName = DateTime.UtcNow.ToString("yyyy-MM-dd") + "-" + logFileNames[(int)type];
 
+                    Directory.CreateDirectory(directory);
+                    File.AppendAllText(Path.Combine(directory, fileName), text, Encoding.Unicode);
                 }
                 catch { } // Ignore
             }
-
-            try
-            {
-                string directory = Path.Combine("log", "patch");
-                string fileName = DateTime.UtcNow.ToString("yyyy-MM-dd") + "-" + logFileNames[(int)type];
-
-                Directory.CreateDirectory(directory);
-                File.AppendAllText(Path.Combine(directory, fileName), text, Encoding.Unicode);
-            }
-            catch { } // Ignore
         }
-        
+
         public static void Info(Type type, string fmt, params object[] args)
         {
             try
@@ -84,6 +78,7 @@ namespace Aselia.Patch.Utils
             {
                 PrepareFormat(ref fmt, ref log);
                 log += string.Format("[{0:s}] [W] {1}\n", DateTime.UtcNow, string.Format(fmt, args));
+                LogWrite(type, log);
             }
             catch (Exception ex)
             {
@@ -97,6 +92,7 @@ namespace Aselia.Patch.Utils
             {
                 PrepareFormat(ref fmt, ref log);
                 log += string.Format("[{0:s}] [E] {1}\n", DateTime.UtcNow, string.Format(fmt, args));
+                LogWrite(type, log);
             }
             catch (Exception ex)
             {
@@ -110,6 +106,7 @@ namespace Aselia.Patch.Utils
             {
                 PrepareFormat(ref fmt, ref log);
                 log += string.Format("[{0:s}] [D] {1}\n", DateTime.UtcNow, string.Format(fmt, args));
+                LogWrite(type, log);
             }
             catch (Exception ex)
             {
