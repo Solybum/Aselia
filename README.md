@@ -8,7 +8,7 @@ Given the fact that most of my programming experience has been in C#, it just ma
 A while after porting the rewritten C code I wanted to give a more 'original' name to the project and a friend suggested **Aselia**, which stays within the trend of PSOBB private server names (**Tethealla** and **Sylverant**), and that's how the current iteration of this project was born.  
 
 ### Status
-The Login and Ship server as well as their specific libraries and the client library are being developed privately.  
+The Login and Ship server, their specific libraries, the client library and the (Ultima's) Launcher are being developed privately.  
 They will eventually be hosted in this repository but I don't know when that will happen. In the meantime you can see the [latest changes](https://www.phantasystaronline.net/forum/index.php?/topic/26809-change-log/&do=getNewComment) in [Ultima](https://www.phantasystaronline.net/forum/), the topic includes change logs of basically everything in the server, the posts titled Test Server are the ones about to Aselia.
 
 ### Dependencies
