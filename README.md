@@ -1,6 +1,6 @@
 # Aselia
 
-A PSOBB Private Server  
+A Phantasy Star Online Blue Burst (PSOBB) Private Server  
 
 ### History
 This project started as a rewrite of **Tethealla**, but after writing from scratch the Patch and Login and part of the Ship servers, I figured I needed to go for a different language to expand on features, and improvements that would otherwise take too long to make.  
