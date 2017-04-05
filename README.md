@@ -11,8 +11,8 @@ A while after porting the rewritten C code I wanted to give a more 'original' na
 The Login and Ship server, their specific libraries, the client library and the (Ultima's) Launcher are being developed privately.  
 They will eventually be hosted in this repository but I don't know when that will happen. In the meantime you can see the [latest changes](https://www.phantasystaronline.net/forum/index.php?/topic/26809-change-log/&do=getNewComment) in [Ultima](https://www.phantasystaronline.net/forum/), the topic includes change logs of basically everything in the server, the posts titled Test Server are the ones about to Aselia.
 
-### Dependencies
-This project depends on several other libraries listed below.  
-Not all the libraries are required for some of the projects.  
+### Thanks
+Thanks to the PSO community which has kept this game alive through the years.
+This project wouldn't be here if it were not for all the people working in other projects like **Tethealla** and **Sylverant**.
 
-[ByteArray](https://github.com/Solybum/Libraries/tree/master/ByteArray)
+Special thanks to Sodaboy and Tofuman for all their help and advice.
